@@ -1,0 +1,42 @@
+--- a/net/minecraft/launcher/game/GameLaunchDispatcher.java
++++ b/net/minecraft/launcher/game/GameLaunchDispatcher.java
+@@ -13,6 +13,8 @@
+ import com.mojang.launcher.updater.VersionSyncInfo;
+ import java.io.File;
+ import java.util.concurrent.locks.ReentrantLock;
++
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.Launcher;
+ import net.minecraft.launcher.game.MinecraftGameRunner;
+ import net.minecraft.launcher.profile.Profile;
+@@ -38,8 +40,10 @@
+         UserAuthentication user;
+         ProfileManager profileManager = this.launcher.getProfileManager();
+         Profile profile = profileManager.getProfiles().isEmpty() ? null : profileManager.getSelectedProfile();
+-        UserAuthentication userAuthentication = user = profileManager.getSelectedUser() == null ? null : profileManager.getAuthDatabase().getByUUID(profileManager.getSelectedUser());
+-        if (user == null || !user.isLoggedIn() || profile == null || this.launcher.getLauncher().getVersionManager().getVersions(profile.getVersionFilter()).isEmpty()) {
++        String selectedUser = profileManager.getSelectedUser();
++        UserAuthentication userAuthentication = user = selectedUser == null ? null : profileManager.getAuthDatabase().getByUUID(profileManager.getSelectedUser());
++        MicrosoftAccount msa = selectedUser == null ? null : profileManager.getAuthDatabase().getMSAByUUID(selectedUser);
++        if (((user == null || !user.isLoggedIn()) && msa == null) || profile == null || this.launcher.getLauncher().getVersionManager().getVersions(profile.getVersionFilter()).isEmpty()) {
+             return PlayStatus.LOADING;
+         }
+         this.lock.lock();
+@@ -56,10 +60,10 @@
+         finally {
+             this.lock.unlock();
+         }
+-        if (user.getSelectedProfile() == null) {
++        if (user != null && user.getSelectedProfile() == null) {
+             return PlayStatus.CAN_PLAY_DEMO;
+         }
+-        if (user.canPlayOnline()) {
++        if ((user != null && user.canPlayOnline()) || msa != null) {
+             return PlayStatus.CAN_PLAY_ONLINE;
+         }
+         return PlayStatus.CAN_PLAY_OFFLINE;
+@@ -194,4 +198,3 @@
+         }
+     }
+ }
+-

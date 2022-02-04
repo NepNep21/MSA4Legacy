@@ -1,0 +1,26 @@
+--- a/net/minecraft/launcher/profile/ProfileManager.java
++++ b/net/minecraft/launcher/profile/ProfileManager.java
+@@ -121,7 +121,7 @@
+             listener.onUserChanged(this);
+         }
+     }
+-
++    
+     public Profile getSelectedProfile() {
+         if (this.selectedProfile == null || !this.profiles.containsKey(this.selectedProfile)) {
+             if (this.profiles.get(DEFAULT_PROFILE_NAME) != null) {
+@@ -200,7 +200,8 @@
+             @Override
+             public RawProfileList deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                 JsonObject object = (JsonObject)json;
+-                Map profiles = Maps.newHashMap();
++                // Weird patch to fix recompilation
++                Map<String, Profile> profiles = Maps.newHashMap();
+                 if (object.has("profiles")) {
+                     profiles = (Map)context.deserialize(object.get("profiles"), new TypeToken<Map<String, Profile>>(){}.getType());
+                 }
+@@ -248,4 +249,3 @@
+         }
+     }
+ }
+-

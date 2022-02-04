@@ -1,0 +1,17 @@
+--- a/com/mojang/launcher/versions/CompatibilityRule.java
++++ b/com/mojang/launcher/versions/CompatibilityRule.java
+@@ -86,7 +86,8 @@
+                         return false;
+                     }
+                 }
+-                catch (Throwable pattern2) {
++                // Weird patch to fix recompilation
++                catch (Throwable ignored) {
+                     // empty catch block
+                 }
+             }
+@@ -110,4 +111,3 @@
+         }
+     }
+ }
+-

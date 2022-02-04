@@ -1,0 +1,29 @@
+--- a/net/minecraft/launcher/updater/CompleteMinecraftVersion.java
++++ b/net/minecraft/launcher/updater/CompleteMinecraftVersion.java
+@@ -29,6 +29,7 @@
+ import net.minecraft.launcher.CompatibilityRule;
+ import net.minecraft.launcher.CurrentLaunchFeatureMatcher;
+ import net.minecraft.launcher.Launcher;
++import net.minecraft.launcher.profile.AuthenticationDatabase;
+ import net.minecraft.launcher.profile.ProfileManager;
+ import net.minecraft.launcher.updater.AbstractDownloadInfo;
+ import net.minecraft.launcher.updater.Argument;
+@@ -328,8 +329,11 @@
+ 
+     public CompatibilityRule.FeatureMatcher createFeatureMatcher() {
+         ProfileManager profileManager = Launcher.getCurrentInstance().getProfileManager();
+-        UserAuthentication auth = profileManager.getAuthDatabase().getByUUID(profileManager.getSelectedUser());
+-        return new CurrentLaunchFeatureMatcher(profileManager.getSelectedProfile(), this, auth);
++        AuthenticationDatabase authDb = profileManager.getAuthDatabase();
++        String selectedUser = profileManager.getSelectedUser();
++        UserAuthentication auth = authDb.getByUUID(selectedUser);
++        
++        return new CurrentLaunchFeatureMatcher(profileManager.getSelectedProfile(), this, auth, authDb.getMSAByUUID(selectedUser));
+     }
+ 
+     public void addArguments(ArgumentType type, CompatibilityRule.FeatureMatcher featureMatcher, GameProcessBuilder builder, StrSubstitutor substitutor) {
+@@ -369,4 +373,3 @@
+         }
+     }
+ }
+-

@@ -1,0 +1,46 @@
+name: build
+
+on: 
+  push:
+    branches:
+      - main
+        
+jobs: 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+        
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '8'
+          java-package: jdk+fx
+      
+      - name: Build installer
+        run: ./gradlew build
+        
+      - name: Decompile launcher
+        run: ./gradlew filterDecomp
+        
+      - name: Recompile launcher
+        run: ./gradlew jarLauncher
+        
+      - name: Generate binpatches
+        run: ./gradlew genBinPatches
+        
+      - name: Upload installer
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v2
+        with: 
+          name: installer
+          path: build/libs/installer-*.jar
+          
+      - name: Upload patches
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v2
+        with: 
+          name: patches
+          path: build/libs/patches.lzma

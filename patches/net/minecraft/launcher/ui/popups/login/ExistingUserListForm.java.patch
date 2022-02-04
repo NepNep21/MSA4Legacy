@@ -1,0 +1,216 @@
+--- a/net/minecraft/launcher/ui/popups/login/ExistingUserListForm.java
++++ b/net/minecraft/launcher/ui/popups/login/ExistingUserListForm.java
+@@ -4,6 +4,8 @@
+ package net.minecraft.launcher.ui.popups.login;
+ 
+ import com.google.common.base.Objects;
++import com.microsoft.aad.msal4j.IAccount;
++import com.microsoft.aad.msal4j.PublicClientApplication;
+ import com.mojang.authlib.UserAuthentication;
+ import com.mojang.authlib.exceptions.AuthenticationException;
+ import com.mojang.util.UUIDTypeAdapter;
+@@ -15,6 +17,9 @@
+ import java.awt.event.ActionEvent;
+ import java.awt.event.ActionListener;
+ import java.io.IOException;
++import java.util.Set;
++import java.util.concurrent.ExecutionException;
++import java.util.function.Consumer;
+ import javax.swing.Box;
+ import javax.swing.JButton;
+ import javax.swing.JComboBox;
+@@ -22,9 +27,10 @@
+ import javax.swing.JPanel;
+ import javax.swing.JPopupMenu;
+ import javax.swing.SwingUtilities;
++
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.profile.AuthenticationDatabase;
+ import net.minecraft.launcher.profile.ProfileManager;
+-import net.minecraft.launcher.ui.popups.login.LogInPopup;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+@@ -33,13 +39,20 @@
+ implements ActionListener {
+     private static final Logger LOGGER = LogManager.getLogger();
+     private final LogInPopup popup;
+-    private final JComboBox userDropdown = new JComboBox();
++    public final JComboBox userDropdown = new JComboBox();
+     private final AuthenticationDatabase authDatabase;
+     private final JButton playButton = new JButton("Play");
+     private final JButton logOutButton = new JButton("Log Out");
++    private final GridBagConstraints defaultConstraints = new GridBagConstraints();
+     private final ProfileManager profileManager;
+ 
+     public ExistingUserListForm(LogInPopup popup) {
++        defaultConstraints.fill = 2;
++        defaultConstraints.gridx = 0;
++        defaultConstraints.gridy = -1;
++        defaultConstraints.gridwidth = 2;
++        defaultConstraints.weightx = 1.0;
++        
+         this.popup = popup;
+         this.profileManager = popup.getMinecraftLauncher().getProfileManager();
+         this.authDatabase = popup.getMinecraftLauncher().getProfileManager().getAuthDatabase();
+@@ -57,19 +70,33 @@
+         }
+     }
+ 
++    public void createPartialInterface() {
++        int index = 0;
++        int theIndex = 0;
++        for (Component comp : getComponents()) {
++            index++;
++            if (comp instanceof JLabel) {
++                String text = ((JLabel) comp).getText();
++                if (text.contains("You're already logged")) {
++                    theIndex = index;
++                    remove(comp);
++                } else if (text.contains("You may use")) {
++                    remove(comp);
++                }
++            }
++        }
++
++        String currentUser = this.authDatabase.getKnownNames().size() == 1 ? this.authDatabase.getKnownNames().iterator().next() : this.authDatabase.getKnownNames().size() + " different users";
++        String thisOrThese = this.authDatabase.getKnownNames().size() == 1 ? "this account" : "one of these accounts";
++        add(new JLabel("You're already logged in as " + currentUser + "."), defaultConstraints, theIndex);
++        add(new JLabel("You may use " + thisOrThese + " and skip authentication."), defaultConstraints, theIndex + 1);
++    }
++
+     protected void createInterface() {
+         this.setLayout(new GridBagLayout());
+-        GridBagConstraints constraints = new GridBagConstraints();
+-        constraints.fill = 2;
+-        constraints.gridx = 0;
+-        constraints.gridy = -1;
+-        constraints.gridwidth = 2;
+-        constraints.weightx = 1.0;
++        GridBagConstraints constraints = (GridBagConstraints) defaultConstraints.clone();
+         this.add(Box.createGlue());
+-        String currentUser = this.authDatabase.getKnownNames().size() == 1 ? this.authDatabase.getKnownNames().iterator().next() : this.authDatabase.getKnownNames().size() + " different users";
+-        String thisOrThese = this.authDatabase.getKnownNames().size() == 1 ? "this account" : "one of these accounts";
+-        this.add((Component)new JLabel("You're already logged in as " + currentUser + "."), constraints);
+-        this.add((Component)new JLabel("You may use " + thisOrThese + " and skip authentication."), constraints);
++        createPartialInterface();
+         this.add(Box.createVerticalStrut(5), constraints);
+         JLabel usernameLabel = new JLabel("Existing User:");
+         Font labelFont = usernameLabel.getFont().deriveFont(1);
+@@ -94,43 +121,57 @@
+         this.add((Component)new JPopupMenu.Separator(), constraints);
+     }
+ 
++    // This is a mess and i hate it
+     @Override
+-    public void actionPerformed(ActionEvent e) {
+-        String uuid;
+-        UserAuthentication auth;
++    public void actionPerformed(final ActionEvent e) {
+         final Object selected = this.userDropdown.getSelectedItem();
+         if (selected != null && selected instanceof String) {
+-            auth = this.authDatabase.getByName((String)selected);
+-            uuid = auth.getSelectedProfile() == null ? "demo-" + auth.getUserID() : UUIDTypeAdapter.fromUUID(auth.getSelectedProfile().getId());
+-        } else {
+-            auth = null;
+-            uuid = null;
+-        }
+-        if (e.getSource() == this.playButton) {
+-            this.popup.setCanLogIn(false);
+-            this.popup.getMinecraftLauncher().getLauncher().getVersionManager().getExecutorService().execute(new Runnable(){
+-
++            final String selectedString = (String) selected;
++            popup.msaLogInForm.auth.authenticate(selectedString).thenAccept(new Consumer<MicrosoftAccount>() {
+                 @Override
+-                public void run() {
+-                    if (auth != null && uuid != null) {
+-                        try {
+-                            if (!auth.canPlayOnline()) {
+-                                auth.logIn();
+-                            }
+-                            ExistingUserListForm.this.popup.setLoggedIn(uuid);
+-                        }
+-                        catch (AuthenticationException ex) {
+-                            ExistingUserListForm.this.popup.getErrorForm().displayError(ex, "We couldn't log you back in as " + selected + ".", "Please try to log in again.");
+-                            ExistingUserListForm.this.removeUser((String)selected, uuid);
+-                            ExistingUserListForm.this.popup.setCanLogIn(true);
++                public void accept(MicrosoftAccount msa) {
++                    final UserAuthentication auth = authDatabase.getByName(selectedString);
++                    String uuid = null;
++                    if (auth == null) {
++                        if (msa != null) {
++                            uuid = msa.uuid;
+                         }
+                     } else {
+-                        ExistingUserListForm.this.popup.setCanLogIn(true);
++                        uuid = auth.getSelectedProfile() == null ? 
++                                "demo-" + auth.getUserID() :
++                                UUIDTypeAdapter.fromUUID(auth.getSelectedProfile().getId());
++                    }
++                    if (e.getSource() == playButton) {
++                        popup.setCanLogIn(false);
++                        final MicrosoftAccount finalMsa = msa;
++                        final String finalUuid = uuid;
++                        popup.getMinecraftLauncher().getLauncher().getVersionManager().getExecutorService().execute(new Runnable(){
++                            @Override
++                            public void run() {
++                                if (auth != null) {
++                                    try {
++                                        if (!auth.canPlayOnline()) {
++                                            auth.logIn();
++                                        }
++                                        ExistingUserListForm.this.popup.setLoggedIn(finalUuid);
++                                    }
++                                    catch (AuthenticationException ex) {
++                                        ExistingUserListForm.this.popup.getErrorForm().displayError(ex, "We couldn't log you back in as " + selected + ".", "Please try to log in again.");
++                                        ExistingUserListForm.this.removeUser((String)selected, finalUuid);
++                                        ExistingUserListForm.this.popup.setCanLogIn(true);
++                                    }
++                                } else if (finalMsa != null) {
++                                    popup.setLoggedIn(finalMsa);
++                                } else  {
++                                    ExistingUserListForm.this.popup.setCanLogIn(true);
++                                }
++                            }
++                        });
++                    } else if (e.getSource() == logOutButton) {
++                        removeUser((String)selected, uuid);
+                     }
+                 }
+             });
+-        } else if (e.getSource() == this.logOutButton) {
+-            this.removeUser((String)selected, uuid);
+         }
+     }
+ 
+@@ -146,6 +187,25 @@
+         } else {
+             this.userDropdown.removeItem(name);
+             this.authDatabase.removeUUID(uuid);
++            authDatabase.msaByEmail.remove(name);
++            final PublicClientApplication pca = popup.msaLogInForm.auth.app;
++            pca.getAccounts().thenAccept(new Consumer<Set<IAccount>>() {
++                @Override
++                public void accept(Set<IAccount> iAccounts) {
++                    for (IAccount acc : iAccounts) {
++                        if (acc.username().equals(name)) {
++                            try {
++                                pca.removeAccount(acc).get();
++                            } catch (ExecutionException e) {
++                                LOGGER.error("Exception removing microsoft account", e);
++                            } catch (InterruptedException e) {
++                                Thread.currentThread().interrupt(); // Maybe?
++                            }
++                            break;
++                        }
++                    }
++                }
++            });
+             try {
+                 this.profileManager.saveProfiles();
+             }
+@@ -158,4 +218,3 @@
+         }
+     }
+ }
+-

@@ -1,0 +1,17 @@
+--- a/com/mojang/authlib/yggdrasil/YggdrasilGameProfileRepository.java
++++ b/com/mojang/authlib/yggdrasil/YggdrasilGameProfileRepository.java
+@@ -43,7 +43,8 @@
+             criteria.add(name.toLowerCase());
+         }
+         int page = 0;
+-        for (List request : Iterables.partition(criteria, 2)) {
++        // Weird patch to fix recompilation
++        for (List<String> request : Iterables.partition(criteria, 2)) {
+             boolean failed;
+             int failCount = 0;
+             do {
+@@ -87,4 +88,3 @@
+         }
+     }
+ }
+-

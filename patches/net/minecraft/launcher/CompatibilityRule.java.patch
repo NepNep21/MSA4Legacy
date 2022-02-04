@@ -1,0 +1,17 @@
+--- a/net/minecraft/launcher/CompatibilityRule.java
++++ b/net/minecraft/launcher/CompatibilityRule.java
+@@ -108,7 +108,8 @@
+                         return false;
+                     }
+                 }
+-                catch (Throwable pattern2) {
++                // Weird patch to fix recompilation
++                catch (Throwable ignored) {
+                     // empty catch block
+                 }
+             }
+@@ -132,4 +133,3 @@
+         }
+     }
+ }
+-

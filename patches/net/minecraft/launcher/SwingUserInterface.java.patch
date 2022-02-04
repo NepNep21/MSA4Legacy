@@ -1,0 +1,86 @@
+--- a/net/minecraft/launcher/SwingUserInterface.java
++++ b/net/minecraft/launcher/SwingUserInterface.java
+@@ -28,6 +28,8 @@
+ import javax.swing.JPanel;
+ import javax.swing.SwingUtilities;
+ import javax.swing.UIManager;
++
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.Launcher;
+ import net.minecraft.launcher.LauncherConstants;
+ import net.minecraft.launcher.MinecraftUserInterface;
+@@ -45,6 +47,7 @@
+ implements MinecraftUserInterface {
+     private static final Logger LOGGER = LogManager.getLogger();
+     private static final long MAX_SHUTDOWN_TIME = 10000L;
++    public LogInPopup popup = null;
+     private final Launcher minecraftLauncher;
+     private LauncherPanel launcherPanel;
+     private final JFrame frame;
+@@ -92,7 +95,7 @@
+ 
+             @Override
+             public void run() {
+-                LogInPopup popup = new LogInPopup(minecraftLauncher, callback);
++                popup = new LogInPopup(minecraftLauncher, callback);
+                 SwingUserInterface.this.launcherPanel.setCard("login", popup);
+             }
+         });
+@@ -192,15 +195,31 @@
+         this.showLoginPrompt(this.minecraftLauncher, new LogInPopup.Callback(){
+ 
+             @Override
+-            public void onLogIn(String uuid) {
++            public void onLogIn(String uuid, MicrosoftAccount msa) {
+                 UserAuthentication auth = profileManager.getAuthDatabase().getByUUID(uuid);
++                uuid = uuid == null ? msa.uuid : uuid;
+                 profileManager.setSelectedUser(uuid);
+-                if (selectedProfile.getName().equals("(Default)") && auth.getSelectedProfile() != null) {
+-                    String playerName = auth.getSelectedProfile().getName();
+-                    String profileName = auth.getSelectedProfile().getName();
++                
++                String name = null;
++                if (auth == null) {
++                    name = msa.email;
++                }
++                
++                if (selectedProfile.getName().equals("(Default)")) {
++                    String profileName;
++                    if (auth != null && auth.getSelectedProfile() != null) {
++                        name = auth.getSelectedProfile().getName();
++                    }
++                    
++                    if (name == null) {
++                        return;
++                    }
++                    
++                    profileName = name;
++                    
+                     int count = 1;
+                     while (profileManager.getProfiles().containsKey(profileName)) {
+-                        profileName = playerName + " " + ++count;
++                        profileName = name + " " + ++count;
+                     }
+                     Profile newProfile = new Profile(selectedProfile);
+                     newProfile.setName(profileName);
+@@ -318,7 +337,14 @@
+                 GameOutputTab tab = new GameOutputTab(SwingUserInterface.this.minecraftLauncher);
+                 future.set(tab);
+                 UserAuthentication auth = gameRunner.getAuth();
+-                String name = auth.getSelectedProfile() == null ? "Demo" : auth.getSelectedProfile().getName();
++                String name;
++                if (auth  != null) {
++                    name = auth.getSelectedProfile() == null ? "Demo" : auth.getSelectedProfile().getName();
++                } else if (gameRunner.msa != null){
++                    name = gameRunner.msa.username;
++                } else {
++                    name = "Demo";
++                }
+                 SwingUserInterface.this.launcherPanel.getTabPanel().removeTab("Game Output (" + name + ")");
+                 SwingUserInterface.this.launcherPanel.getTabPanel().addTab("Game Output (" + name + ")", tab);
+                 SwingUserInterface.this.launcherPanel.getTabPanel().setSelectedComponent(tab);
+@@ -342,4 +368,3 @@
+         return this.frame;
+     }
+ }
+-

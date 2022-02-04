@@ -1,0 +1,24 @@
+--- a/net/minecraft/launcher/updater/MinecraftVersionManager.java
++++ b/net/minecraft/launcher/updater/MinecraftVersionManager.java
+@@ -300,14 +300,9 @@
+             LOGGER.debug("Delta time to compare resources: " + delta / 1000000L + " ms ");
+         }
+         catch (Exception ex) {
+-            try {
+-                LOGGER.error("Couldn't download resources", (Throwable)ex);
+-            }
+-            catch (Throwable throwable) {
+-                IOUtils.closeQuietly(inputStream);
+-                throw throwable;
+-            }
++            LOGGER.error("Couldn't download resources", (Throwable)ex);
+             IOUtils.closeQuietly(inputStream);
++            throw new RuntimeException(ex);
+         }
+         IOUtils.closeQuietly(inputStream);
+         return result;
+@@ -362,4 +357,3 @@
+         }
+     }
+ }
+-

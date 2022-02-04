@@ -1,0 +1,17 @@
+--- a/net/minecraft/launcher/ui/bottombar/StatusPanelForm.java
++++ b/net/minecraft/launcher/ui/bottombar/StatusPanelForm.java
+@@ -57,7 +57,8 @@
+             public void run() {
+                 try {
+                     TypeToken<List<Map<String, ServerStatus>>> token = new TypeToken<List<Map<String, ServerStatus>>>(){};
+-                    List statuses = (List)StatusPanelForm.this.gson.fromJson(Http.performGet(new URL("http://status.mojang.com/check"), StatusPanelForm.this.minecraftLauncher.getLauncher().getProxy()), token.getType());
++                    // Weird patch to fix recompilation
++                    List<Map<String, ServerStatus>> statuses = (List)StatusPanelForm.this.gson.fromJson(Http.performGet(new URL("http://status.mojang.com/check"), StatusPanelForm.this.minecraftLauncher.getLauncher().getProxy()), token.getType());
+                     for (Map serverStatusInformation : statuses) {
+                         if (serverStatusInformation.containsKey(StatusPanelForm.SERVER_LOGIN)) {
+                             StatusPanelForm.this.loginStatus.setText(((ServerStatus)((Object)serverStatusInformation.get(StatusPanelForm.SERVER_LOGIN))).title);
+@@ -86,4 +87,3 @@
+         }
+     }
+ }
+-

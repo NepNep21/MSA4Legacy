@@ -1,0 +1,46 @@
+--- a/net/minecraft/launcher/ui/bottombar/PlayerInfoPanel.java
++++ b/net/minecraft/launcher/ui/bottombar/PlayerInfoPanel.java
+@@ -17,6 +17,8 @@
+ import javax.swing.JLabel;
+ import javax.swing.JPanel;
+ import javax.swing.SwingUtilities;
++
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.Launcher;
+ import net.minecraft.launcher.profile.Profile;
+ import net.minecraft.launcher.profile.ProfileManager;
+@@ -89,7 +91,16 @@
+         VersionSyncInfo version;
+         UserAuthentication auth;
+         ProfileManager profileManager = this.minecraftLauncher.getProfileManager();
+-        UserAuthentication userAuthentication = auth = profileManager.getSelectedUser() == null ? null : profileManager.getAuthDatabase().getByUUID(profileManager.getSelectedUser());
++        
++        String selectedUser = profileManager.getSelectedUser();
++        MicrosoftAccount msa = null;
++        if (selectedUser == null) {
++            auth = null;
++        } else {
++            auth = profileManager.getAuthDatabase().getByUUID(selectedUser);
++            msa = profileManager.getAuthDatabase().getMSAByUUID(selectedUser);
++        }
++        
+         if (auth == null || !auth.isLoggedIn()) {
+             this.welcomeText.setText("Welcome, guest! Please log in.");
+         } else if (auth.getSelectedProfile() == null) {
+@@ -97,6 +108,11 @@
+         } else {
+             this.welcomeText.setText("<html>Welcome, <b>" + auth.getSelectedProfile().getName() + "</b></html>");
+         }
++        
++        if (msa != null) {
++            this.welcomeText.setText("<html>Welcome, <b>" + msa.username + "</b></html>");
++        }
++        
+         Profile profile = profileManager.getProfiles().isEmpty() ? null : profileManager.getSelectedProfile();
+         List<VersionSyncInfo> versions = profile == null ? null : this.minecraftLauncher.getLauncher().getVersionManager().getVersions(profile.getVersionFilter());
+         VersionSyncInfo versionSyncInfo = version = profile == null || versions.isEmpty() ? null : versions.get(0);
+@@ -141,4 +157,3 @@
+         });
+     }
+ }
+-

@@ -1,0 +1,91 @@
+--- a/net/minecraft/launcher/ui/popups/login/LogInPopup.java
++++ b/net/minecraft/launcher/ui/popups/login/LogInPopup.java
+@@ -21,11 +21,11 @@
+ import javax.swing.JProgressBar;
+ import javax.swing.SwingUtilities;
+ import javax.swing.border.EmptyBorder;
++
++import me.nepnep.msa4legacy.patches.MSALogInForm;
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.Launcher;
+ import net.minecraft.launcher.LauncherConstants;
+-import net.minecraft.launcher.ui.popups.login.AuthErrorForm;
+-import net.minecraft.launcher.ui.popups.login.ExistingUserListForm;
+-import net.minecraft.launcher.ui.popups.login.LogInForm;
+ 
+ public class LogInPopup
+ extends JPanel
+@@ -38,6 +38,10 @@
+     private final JButton loginButton = new JButton("Log In");
+     private final JButton registerButton = new JButton("Register");
+     private final JProgressBar progressBar = new JProgressBar();
++    public final JButton msaButton = new JButton("Microsoft Account");
++    public final MSALogInForm msaLogInForm = new MSALogInForm(this);
++    public final JPanel buttonPanel = new JPanel();
++    public int existingUserListIndex = 0;
+ 
+     public LogInPopup(Launcher minecraftLauncher, Callback callback) {
+         super(true);
+@@ -49,6 +53,7 @@
+         this.createInterface();
+         this.loginButton.addActionListener(this);
+         this.registerButton.addActionListener(this);
++        this.msaButton.addActionListener(this);
+     }
+ 
+     protected void createInterface() {
+@@ -63,6 +68,7 @@
+                 imagePanel.add(label);
+                 this.add(imagePanel);
+                 this.add(Box.createVerticalStrut(10));
++                existingUserListIndex = 2;
+             }
+         }
+         catch (IOException e) {
+@@ -73,11 +79,13 @@
+         }
+         this.add(this.errorForm);
+         this.add(this.logInForm);
++        this.add(this.msaLogInForm);
+         this.add(Box.createVerticalStrut(15));
+-        JPanel buttonPanel = new JPanel();
+-        buttonPanel.setLayout(new GridLayout(1, 2, 10, 0));
++        buttonPanel.setLayout(new GridLayout(1, 3, 10, 0));
+         buttonPanel.add(this.registerButton);
+         buttonPanel.add(this.loginButton);
++        msaLogInForm.setVisible(false);
++        buttonPanel.add(msaButton);
+         this.add(buttonPanel);
+         this.progressBar.setIndeterminate(true);
+         this.progressBar.setVisible(false);
+@@ -90,6 +98,8 @@
+             this.logInForm.tryLogIn();
+         } else if (e.getSource() == this.registerButton) {
+             OperatingSystem.openLink(LauncherConstants.URL_REGISTER);
++        } else if (e.getSource() == msaButton) {
++            msaLogInForm.setVisible(true);
+         }
+     }
+ 
+@@ -128,7 +138,11 @@
+     }
+ 
+     public void setLoggedIn(String uuid) {
+-        this.callback.onLogIn(uuid);
++        this.callback.onLogIn(uuid, null);
++    }
++    
++    public void setLoggedIn(MicrosoftAccount msa) {
++        callback.onLogIn(null, msa);
+     }
+ 
+     public void repack() {
+@@ -139,7 +153,6 @@
+     }
+ 
+     public static interface Callback {
+-        public void onLogIn(String var1);
++        public void onLogIn(String var1, MicrosoftAccount msa);
+     }
+ }
+-

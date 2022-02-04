@@ -1,0 +1,123 @@
+--- a/net/minecraft/launcher/game/MinecraftGameRunner.java
++++ b/net/minecraft/launcher/game/MinecraftGameRunner.java
+@@ -45,14 +45,15 @@
+ import java.util.Map;
+ import java.util.TreeSet;
+ import java.util.UUID;
++import java.util.concurrent.ExecutionException;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipFile;
+-import net.minecraft.launcher.CompatibilityRule;
+-import net.minecraft.launcher.CurrentLaunchFeatureMatcher;
+-import net.minecraft.launcher.Launcher;
+-import net.minecraft.launcher.LauncherConstants;
++
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
++import net.minecraft.launcher.*;
+ import net.minecraft.launcher.profile.LauncherVisibilityRule;
+ import net.minecraft.launcher.profile.Profile;
++import net.minecraft.launcher.profile.ProfileManager;
+ import net.minecraft.launcher.updater.ArgumentType;
+ import net.minecraft.launcher.updater.CompleteMinecraftVersion;
+ import net.minecraft.launcher.updater.Library;
+@@ -77,6 +78,7 @@
+     private LauncherVisibilityRule visibilityRule = LauncherVisibilityRule.CLOSE_LAUNCHER;
+     private UserAuthentication auth;
+     private Profile selectedProfile;
++    public MicrosoftAccount msa = null;
+ 
+     public MinecraftGameRunner(Launcher minecraftLauncher, String[] additionalLaunchArgs) {
+         this.minecraftLauncher = minecraftLauncher;
+@@ -254,25 +256,60 @@
+         }
+         return virtualRoot;
+     }
++    
++    public void createMSA() {
++        if (msa != null) {
++            return;
++        }
++        
++        ProfileManager profManager = minecraftLauncher.getProfileManager();
++        msa = profManager.getAuthDatabase().getMSAByUUID(profManager.getSelectedUser());
++        if (msa != null) {
++            try {
++                msa = ((SwingUserInterface) minecraftLauncher.getUserInterface()).popup
++                        .msaLogInForm
++                        .auth
++                        .authenticate(msa.email)
++                        .get();
++            } catch (InterruptedException e) {
++                Thread.currentThread().interrupt();
++            } catch (ExecutionException e) {
++                msa = null;
++            }
++        }
++    }
+ 
+     public StrSubstitutor createArgumentsSubstitutor(CompleteMinecraftVersion version, Profile selectedProfile, File gameDirectory, File assetsDirectory, UserAuthentication authentication) {
+         HashMap<String, String> map = new HashMap<String, String>();
+-        map.put("auth_access_token", authentication.getAuthenticatedToken());
+-        map.put("user_properties", new GsonBuilder().registerTypeAdapter((Type)((Object)PropertyMap.class), new LegacyPropertyMapSerializer()).create().toJson(authentication.getUserProperties()));
+-        map.put("user_property_map", new GsonBuilder().registerTypeAdapter((Type)((Object)PropertyMap.class), new PropertyMap.Serializer()).create().toJson(authentication.getUserProperties()));
+-        if (authentication.isLoggedIn() && authentication.canPlayOnline()) {
+-            if (authentication instanceof YggdrasilUserAuthentication) {
+-                map.put("auth_session", String.format("token:%s:%s", authentication.getAuthenticatedToken(), UUIDTypeAdapter.fromUUID(authentication.getSelectedProfile().getId())));
++        createMSA();
++        if (authentication != null) {
++            map.put("auth_access_token", authentication.getAuthenticatedToken());
++            map.put("user_properties", new GsonBuilder().registerTypeAdapter((Type) ((Object) PropertyMap.class), new LegacyPropertyMapSerializer()).create().toJson(authentication.getUserProperties()));
++            map.put("user_property_map", new GsonBuilder().registerTypeAdapter((Type) ((Object) PropertyMap.class), new PropertyMap.Serializer()).create().toJson(authentication.getUserProperties()));
++            if (authentication.isLoggedIn() && authentication.canPlayOnline()) {
++                if (authentication instanceof YggdrasilUserAuthentication) {
++                    map.put("auth_session", String.format("token:%s:%s", authentication.getAuthenticatedToken(), UUIDTypeAdapter.fromUUID(authentication.getSelectedProfile().getId())));
++                } else {
++                    map.put("auth_session", authentication.getAuthenticatedToken());
++                }
+             } else {
+-                map.put("auth_session", authentication.getAuthenticatedToken());
++                map.put("auth_session", "-");
+             }
++        } else if (msa != null) {
++            map.put("auth_access_token", msa.token);
++            map.put("auth-session", String.format("token:%s:%s", msa.token, msa.uuid));
+         } else {
+             map.put("auth_session", "-");
+         }
+-        if (authentication.getSelectedProfile() != null) {
++        
++        if (authentication != null && authentication.getSelectedProfile() != null) {
+             map.put("auth_player_name", authentication.getSelectedProfile().getName());
+             map.put("auth_uuid", UUIDTypeAdapter.fromUUID(authentication.getSelectedProfile().getId()));
+             map.put("user_type", authentication.getUserType().getName());
++        } else if (msa != null) {
++            map.put("auth_player_name", msa.username);
++            map.put("auth_uuid", msa.uuid);
++            map.put("user_type", UserType.MOJANG.getName());
+         } else {
+             map.put("auth_player_name", "Player");
+             map.put("auth_uuid", new UUID(0L, 0L).toString());
+@@ -390,7 +427,8 @@
+     }
+ 
+     private CompatibilityRule.FeatureMatcher createFeatureMatcher() {
+-        return new CurrentLaunchFeatureMatcher(this.selectedProfile, this.getVersion(), this.minecraftLauncher.getProfileManager().getAuthDatabase().getByUUID(this.minecraftLauncher.getProfileManager().getSelectedUser()));
++        createMSA();
++        return new CurrentLaunchFeatureMatcher(this.selectedProfile, this.getVersion(), this.minecraftLauncher.getProfileManager().getAuthDatabase().getByUUID(this.minecraftLauncher.getProfileManager().getSelectedUser()), msa);
+     }
+ 
+     private String constructClassPath(CompleteMinecraftVersion version) {
+@@ -469,7 +507,7 @@
+                     }
+                     catch (Throwable throwable) {
+                         Downloadable.closeSilently(inputStream);
+-                        throw throwable;
++                        throw new RuntimeException(throwable);
+                     }
+                     Downloadable.closeSilently(inputStream);
+                     break block10;
+@@ -494,4 +532,3 @@
+         return this.selectedProfile;
+     }
+ }
+-

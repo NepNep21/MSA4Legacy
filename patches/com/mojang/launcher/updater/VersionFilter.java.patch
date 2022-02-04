@@ -1,0 +1,17 @@
+--- a/com/mojang/launcher/updater/VersionFilter.java
++++ b/com/mojang/launcher/updater/VersionFilter.java
+@@ -24,7 +24,8 @@
+ 
+     public VersionFilter<T> onlyForTypes(T ... types) {
+         this.types.clear();
+-        this.includeTypes((ReleaseType[])types);
++        // Weird patch to fix recompilation
++        this.includeTypes(types);
+         return this;
+     }
+ 
+@@ -53,4 +54,3 @@
+         return this;
+     }
+ }
+-

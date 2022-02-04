@@ -1,0 +1,63 @@
+--- a/net/minecraft/launcher/Launcher.java
++++ b/net/minecraft/launcher/Launcher.java
+@@ -18,6 +18,7 @@
+ import com.mojang.launcher.versions.Version;
+ import com.mojang.util.UUIDTypeAdapter;
+ import java.io.File;
++import java.io.FileFilter;
+ import java.io.IOException;
+ import java.net.PasswordAuthentication;
+ import java.net.Proxy;
+@@ -297,10 +298,12 @@
+                 referencedObjects.add(object.getHash().toLowerCase());
+             }
+         }
+-        File[] directories = objectsDir.listFiles(DirectoryFileFilter.DIRECTORY);
++        // Weird patch to fix recompilation
++        File[] directories = objectsDir.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+         if (directories != null) {
+             for (File directory : directories) {
+-                File[] files = directory.listFiles(FileFileFilter.FILE);
++                // Weird patch to fix recompilation
++                File[] files = directory.listFiles((FileFilter) FileFileFilter.FILE);
+                 if (files == null) continue;
+                 for (File file : files) {
+                     if (referencedObjects.contains(file.getName().toLowerCase())) continue;
+@@ -373,7 +376,8 @@
+         if (!virtualsDir.isDirectory()) {
+             return;
+         }
+-        File[] directories = virtualsDir.listFiles(DirectoryFileFilter.DIRECTORY);
++        // Weird patch to fix recompilation
++        File[] directories = virtualsDir.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+         if (directories != null) {
+             for (File directory : directories) {
+                 File lastUsedFile = new File(directory, ".lastused");
+@@ -398,10 +402,12 @@
+         if (!root.isDirectory()) {
+             return;
+         }
+-        File[] versions = root.listFiles(DirectoryFileFilter.DIRECTORY);
++        // Weird patch to fix recompilation
++        File[] versions = root.listFiles((FileFilter) DirectoryFileFilter.DIRECTORY);
+         if (versions != null) {
+             for (File version : versions) {
+-                File[] files = version.listFiles(FileFilterUtils.and(new PrefixFileFilter(version.getName() + "-natives-"), ageFilter));
++                // Weird patch to fix recompilation
++                File[] files = version.listFiles((FileFilter) FileFilterUtils.and(new PrefixFileFilter(version.getName() + "-natives-"), ageFilter));
+                 if (files == null) continue;
+                 for (File folder : files) {
+                     LOGGER.debug("Deleting " + folder);
+@@ -488,7 +494,6 @@
+                 if (!FileUtils.deleteQuietly(file)) break block0;
+                 LOGGER.info("Deleted empty directory {}", file);
+             }
+-            break;
+         }
+     }
+ 
+@@ -521,4 +526,3 @@
+         LOGGER = LogManager.getLogger();
+     }
+ }
+-

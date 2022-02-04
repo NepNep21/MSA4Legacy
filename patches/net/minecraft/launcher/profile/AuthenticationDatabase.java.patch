@@ -1,0 +1,66 @@
+--- a/net/minecraft/launcher/profile/AuthenticationDatabase.java
++++ b/net/minecraft/launcher/profile/AuthenticationDatabase.java
+@@ -16,16 +16,17 @@
+ import com.mojang.authlib.UserAuthentication;
+ import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+ import java.lang.reflect.Type;
+-import java.util.ArrayList;
+-import java.util.Collection;
+-import java.util.HashMap;
+-import java.util.LinkedHashMap;
+-import java.util.Map;
+-import java.util.Set;
++import java.util.*;
++
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.Launcher;
+ 
++// My code here is so bad :sob:
+ public class AuthenticationDatabase {
+     public static final String DEMO_UUID_PREFIX = "demo-";
++    
++    public final Map<String, MicrosoftAccount> msaByEmail = new HashMap<String, MicrosoftAccount>();
++    
+     private final Map<String, UserAuthentication> authById;
+     private final AuthenticationService authenticationService;
+ 
+@@ -56,6 +57,15 @@
+     public UserAuthentication getByUUID(String uuid) {
+         return this.authById.get(uuid);
+     }
++    
++    public MicrosoftAccount getMSAByUUID(String uuid) {
++        for (MicrosoftAccount msa : msaByEmail.values()) {
++            if (msa.uuid.equals(uuid)) {
++                return msa;
++            }
++        }
++        return null;
++    }
+ 
+     public Collection<String> getKnownNames() {
+         ArrayList<String> names = new ArrayList<String>();
+@@ -67,6 +77,8 @@
+             }
+             names.add(AuthenticationDatabase.getUserFromDemoUUID(entry.getKey()));
+         }
++        
++        names.addAll(msaByEmail.keySet());
+         return names;
+     }
+ 
+@@ -147,7 +159,8 @@
+ 
+         @Override
+         public JsonElement serialize(AuthenticationDatabase src, Type typeOfSrc, JsonSerializationContext context) {
+-            Map services = src.authById;
++            // Weird patch to fix recompilation
++            Map<String, UserAuthentication> services = src.authById;
+             HashMap credentials = new HashMap();
+             for (Map.Entry entry : services.entrySet()) {
+                 credentials.put(entry.getKey(), ((UserAuthentication)entry.getValue()).saveForStorage());
+@@ -156,4 +169,3 @@
+         }
+     }
+ }
+-

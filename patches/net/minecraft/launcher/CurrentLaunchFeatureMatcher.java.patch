@@ -1,0 +1,42 @@
+--- a/net/minecraft/launcher/CurrentLaunchFeatureMatcher.java
++++ b/net/minecraft/launcher/CurrentLaunchFeatureMatcher.java
+@@ -5,6 +5,7 @@
+ 
+ import com.google.common.base.Objects;
+ import com.mojang.authlib.UserAuthentication;
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.CompatibilityRule;
+ import net.minecraft.launcher.profile.Profile;
+ import net.minecraft.launcher.updater.CompleteMinecraftVersion;
+@@ -14,16 +15,25 @@
+     private final Profile profile;
+     private final CompleteMinecraftVersion version;
+     private final UserAuthentication auth;
++    private final MicrosoftAccount msa;
+ 
+-    public CurrentLaunchFeatureMatcher(Profile profile, CompleteMinecraftVersion version, UserAuthentication auth) {
++    public CurrentLaunchFeatureMatcher(Profile profile, CompleteMinecraftVersion version, UserAuthentication auth, MicrosoftAccount msa) {
+         this.profile = profile;
+         this.version = version;
+         this.auth = auth;
++        this.msa = msa;
++    }
++    
++    public CurrentLaunchFeatureMatcher(Profile profile, CompleteMinecraftVersion version, UserAuthentication auth) {
++        this(profile, version, auth, null);
+     }
+ 
+     @Override
+     public boolean hasFeature(String name, Object value) {
+         if (name.equals("is_demo_user")) {
++            if (auth == null) {
++                return Objects.equal(msa == null, value);
++            }
+             return Objects.equal(this.auth.getSelectedProfile() == null, value);
+         }
+         if (name.equals("has_custom_resolution")) {
+@@ -32,4 +42,3 @@
+         return false;
+     }
+ }
+-
