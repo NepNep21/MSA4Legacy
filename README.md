@@ -1,5 +1,5 @@
 # MSA4Legacy
-Patches for the old minecraft official launcher to add microsoft account support 
+Patches for the old minecraft official launcher to add microsoft account support  
 My code here is quite atrocious in some parts (for example it makes a bunch of unnecessary auth requests due to lack of proper caching), but it works so i decided to release it now, i will likely be improving it in the future  
 
 # Requirements  
