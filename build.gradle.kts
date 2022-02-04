@@ -9,7 +9,6 @@ import java.nio.file.Paths
 buildscript {
     repositories {
         maven("https://nexus.covers1624.net/repository/maven-releases/")
-        maven("https://maven.minecraftforge.net/")
         maven("https://jitpack.io/")
     }
 

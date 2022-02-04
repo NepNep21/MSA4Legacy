@@ -1,0 +1,16 @@
+--- a/net/minecraft/launcher/ui/tabs/website/JFXBrowser.java
++++ b/net/minecraft/launcher/ui/tabs/website/JFXBrowser.java
+@@ -115,7 +115,7 @@
+                         JFXBrowser.this.loadUrl(JFXBrowser.this.urlToBrowseTo);
+                     }
+                 }
+-                root.getChildren().add((Object)JFXBrowser.this.browser);
++                root.getChildren().add(JFXBrowser.this.browser);
+             }
+         });
+     }
+@@ -161,4 +161,3 @@
+         }
+     }
+ }
+-
