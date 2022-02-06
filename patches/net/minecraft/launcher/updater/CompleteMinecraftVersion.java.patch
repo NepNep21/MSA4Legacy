@@ -1,6 +1,11 @@
 --- a/net/minecraft/launcher/updater/CompleteMinecraftVersion.java
 +++ b/net/minecraft/launcher/updater/CompleteMinecraftVersion.java
-@@ -29,6 +29,7 @@
+@@ -26,9 +26,12 @@
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
++
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
  import net.minecraft.launcher.CompatibilityRule;
  import net.minecraft.launcher.CurrentLaunchFeatureMatcher;
  import net.minecraft.launcher.Launcher;
@@ -8,7 +13,7 @@
  import net.minecraft.launcher.profile.ProfileManager;
  import net.minecraft.launcher.updater.AbstractDownloadInfo;
  import net.minecraft.launcher.updater.Argument;
-@@ -328,8 +329,11 @@
+@@ -328,11 +331,14 @@
  
      public CompatibilityRule.FeatureMatcher createFeatureMatcher() {
          ProfileManager profileManager = Launcher.getCurrentInstance().getProfileManager();
@@ -21,8 +26,22 @@
 +        return new CurrentLaunchFeatureMatcher(profileManager.getSelectedProfile(), this, auth, authDb.getMSAByUUID(selectedUser));
      }
  
-     public void addArguments(ArgumentType type, CompatibilityRule.FeatureMatcher featureMatcher, GameProcessBuilder builder, StrSubstitutor substitutor) {
-@@ -369,4 +373,3 @@
+-    public void addArguments(ArgumentType type, CompatibilityRule.FeatureMatcher featureMatcher, GameProcessBuilder builder, StrSubstitutor substitutor) {
++    public void addArguments(ArgumentType type, CompatibilityRule.FeatureMatcher featureMatcher, GameProcessBuilder builder, StrSubstitutor substitutor, MicrosoftAccount msa) {
+         if (this.arguments != null) {
+             List<Argument> args = this.arguments.get((Object)type);
+             if (args != null) {
+@@ -343,6 +349,9 @@
+         } else if (this.minecraftArguments != null) {
+             if (type == ArgumentType.GAME) {
+                 for (String arg : this.minecraftArguments.split(" ")) {
++                    if (msa != null && (arg.equals("--userProperties") || arg.equals("${user_properties}"))) {
++                        continue;
++                    }
+                     builder.withArguments(substitutor.replace(arg));
+                 }
+                 if (featureMatcher.hasFeature("is_demo_user", true)) {
+@@ -369,4 +378,3 @@
          }
      }
  }

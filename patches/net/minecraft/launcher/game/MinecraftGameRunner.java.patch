@@ -28,6 +28,19 @@
  
      public MinecraftGameRunner(Launcher minecraftLauncher, String[] additionalLaunchArgs) {
          this.minecraftLauncher = minecraftLauncher;
+@@ -183,10 +185,10 @@
+         }
+         CompatibilityRule.FeatureMatcher featureMatcher = this.createFeatureMatcher();
+         StrSubstitutor argumentsSubstitutor = this.createArgumentsSubstitutor(this.getVersion(), this.selectedProfile, gameDirectory, assetsDir, this.auth);
+-        this.getVersion().addArguments(ArgumentType.JVM, featureMatcher, processBuilder, argumentsSubstitutor);
++        this.getVersion().addArguments(ArgumentType.JVM, featureMatcher, processBuilder, argumentsSubstitutor, null);
+         processBuilder.withArguments(this.getVersion().getMainClass());
+         LOGGER.info("Half command: " + StringUtils.join(processBuilder.getFullCommands(), " "));
+-        this.getVersion().addArguments(ArgumentType.GAME, featureMatcher, processBuilder, argumentsSubstitutor);
++        this.getVersion().addArguments(ArgumentType.GAME, featureMatcher, processBuilder, argumentsSubstitutor, msa);
+         Proxy proxy = this.getLauncher().getProxy();
+         PasswordAuthentication proxyAuth = this.getLauncher().getProxyAuth();
+         if (!proxy.equals(Proxy.NO_PROXY)) {
 @@ -254,25 +256,60 @@
          }
          return virtualRoot;
