@@ -8,7 +8,32 @@
  import java.io.IOException;
  import java.net.PasswordAuthentication;
  import java.net.Proxy;
-@@ -297,10 +298,12 @@
+@@ -37,6 +38,7 @@
+ import joptsimple.OptionException;
+ import joptsimple.OptionParser;
+ import joptsimple.OptionSet;
++import me.nepnep.msa4legacy.patches.MicrosoftAccount;
+ import net.minecraft.launcher.LauncherConstants;
+ import net.minecraft.launcher.MinecraftUserInterface;
+ import net.minecraft.launcher.SwingUserInterface;
+@@ -227,9 +229,14 @@
+     }
+ 
+     public void ensureLoggedIn() {
+-        UserAuthentication auth = this.profileManager.getAuthDatabase().getByUUID(this.profileManager.getSelectedUser());
++        AuthenticationDatabase authDb = profileManager.getAuthDatabase();
++        String selected = profileManager.getSelectedUser();
++        UserAuthentication auth = authDb.getByUUID(selected);
++        MicrosoftAccount msa = authDb.getMSAByUUID(selected);
+         if (auth == null) {
+-            this.getUserInterface().showLoginPrompt();
++            if (msa == null) {
++                this.getUserInterface().showLoginPrompt();
++            }
+         } else if (!auth.isLoggedIn()) {
+             if (auth.canLogIn()) {
+                 try {
+@@ -297,10 +304,12 @@
                  referencedObjects.add(object.getHash().toLowerCase());
              }
          }
@@ -23,7 +48,7 @@
                  if (files == null) continue;
                  for (File file : files) {
                      if (referencedObjects.contains(file.getName().toLowerCase())) continue;
-@@ -373,7 +376,8 @@
+@@ -373,7 +382,8 @@
          if (!virtualsDir.isDirectory()) {
              return;
          }
@@ -33,7 +58,7 @@
          if (directories != null) {
              for (File directory : directories) {
                  File lastUsedFile = new File(directory, ".lastused");
-@@ -398,10 +402,12 @@
+@@ -398,10 +408,12 @@
          if (!root.isDirectory()) {
              return;
          }
@@ -48,7 +73,7 @@
                  if (files == null) continue;
                  for (File folder : files) {
                      LOGGER.debug("Deleting " + folder);
-@@ -488,7 +494,6 @@
+@@ -488,7 +500,6 @@
                  if (!FileUtils.deleteQuietly(file)) break block0;
                  LOGGER.info("Deleted empty directory {}", file);
              }
@@ -56,7 +81,7 @@
          }
      }
  
-@@ -521,4 +526,3 @@
+@@ -521,4 +532,3 @@
          LOGGER = LogManager.getLogger();
      }
  }
