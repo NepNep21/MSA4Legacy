@@ -34,7 +34,7 @@ public class MicrosoftAuth {
             .build();
     public final Gson gson = new Gson();
     @SuppressWarnings("all") // Beta
-    public final Type accountListType = new TypeToken<ArrayList<MicrosoftAccount>>() {}.getType();
+    public final Type accountSetType = new TypeToken<HashSet<MicrosoftAccount>>() {}.getType();
     public final File cacheInfoFile = new File(Launcher.getCurrentInstance().getLauncher().getWorkingDirectory(), "microsoft_account_info.json");
     private final Set<String> scopes = new HashSet<String>();
     private final String tenant = "consumers";
@@ -261,16 +261,16 @@ public class MicrosoftAuth {
             }
 
             boolean changed = false;
-            ArrayList<MicrosoftAccount> accounts;
+            HashSet<MicrosoftAccount> accounts;
             try {
-                accounts = gson.fromJson(FileUtils.readFileToString(cacheInfoFile, "UTF-8"), accountListType);
+                accounts = gson.fromJson(FileUtils.readFileToString(cacheInfoFile, "UTF-8"), accountSetType);
             } catch (JsonSyntaxException e) {
-                accounts = new ArrayList<MicrosoftAccount>();
+                accounts = new HashSet<MicrosoftAccount>();
                 changed = true;
             }
             
             if (accounts == null) {
-                accounts = new ArrayList<MicrosoftAccount>();
+                accounts = new HashSet<MicrosoftAccount>();
                 changed = true;
             }
             
