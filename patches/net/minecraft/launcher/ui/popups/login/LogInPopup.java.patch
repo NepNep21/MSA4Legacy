@@ -20,13 +20,18 @@
      private final JButton registerButton = new JButton("Register");
      private final JProgressBar progressBar = new JProgressBar();
 +    public final JButton msaButton = new JButton("Microsoft Account");
-+    public final MSALogInForm msaLogInForm = new MSALogInForm(this);
++    public final MSALogInForm msaLogInForm;
 +    public final JPanel buttonPanel = new JPanel();
 +    public int existingUserListIndex = 0;
  
      public LogInPopup(Launcher minecraftLauncher, Callback callback) {
          super(true);
-@@ -49,6 +53,7 @@
+@@ -45,10 +49,12 @@
+         this.callback = callback;
+         this.errorForm = new AuthErrorForm(this);
+         this.existingUserListForm = new ExistingUserListForm(this);
++        msaLogInForm = new MSALogInForm(this);
+         this.logInForm = new LogInForm(this);
          this.createInterface();
          this.loginButton.addActionListener(this);
          this.registerButton.addActionListener(this);
@@ -34,7 +39,7 @@
      }
  
      protected void createInterface() {
-@@ -63,6 +68,7 @@
+@@ -63,6 +69,7 @@
                  imagePanel.add(label);
                  this.add(imagePanel);
                  this.add(Box.createVerticalStrut(10));
@@ -42,7 +47,7 @@
              }
          }
          catch (IOException e) {
-@@ -73,11 +79,13 @@
+@@ -73,11 +80,13 @@
          }
          this.add(this.errorForm);
          this.add(this.logInForm);
@@ -58,7 +63,7 @@
          this.add(buttonPanel);
          this.progressBar.setIndeterminate(true);
          this.progressBar.setVisible(false);
-@@ -90,6 +98,8 @@
+@@ -90,6 +99,8 @@
              this.logInForm.tryLogIn();
          } else if (e.getSource() == this.registerButton) {
              OperatingSystem.openLink(LauncherConstants.URL_REGISTER);
@@ -67,7 +72,7 @@
          }
      }
  
-@@ -128,7 +138,11 @@
+@@ -128,7 +139,11 @@
      }
  
      public void setLoggedIn(String uuid) {
@@ -80,7 +85,7 @@
      }
  
      public void repack() {
-@@ -139,7 +153,6 @@
+@@ -139,7 +154,6 @@
      }
  
      public static interface Callback {

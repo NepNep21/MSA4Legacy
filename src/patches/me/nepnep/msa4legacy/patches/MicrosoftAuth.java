@@ -1,10 +1,12 @@
 package me.nepnep.msa4legacy.patches;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.*;
 import com.microsoft.aad.msal4j.*;
 import net.minecraft.launcher.Launcher;
 import net.minecraft.launcher.ui.popups.login.ExistingUserListForm;
 import net.minecraft.launcher.ui.popups.login.LogInPopup;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,13 +14,15 @@ import org.apache.logging.log4j.Logger;
 import javax.net.ssl.HttpsURLConnection;
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -28,12 +32,15 @@ public class MicrosoftAuth {
     public final PublicClientApplication app = PublicClientApplication.builder("810b4a0d-7663-4e28-8680-24458240dee4")
             .setTokenCacheAccessAspect(new TokenCache())
             .build();
-    private final Gson gson = new Gson();
+    public final Gson gson = new Gson();
+    @SuppressWarnings("all") // Beta
+    public final Type accountListType = new TypeToken<ArrayList<MicrosoftAccount>>() {}.getType();
+    public final File cacheInfoFile = new File(Launcher.getCurrentInstance().getLauncher().getWorkingDirectory(), "microsoft_account_info.json");
     private final Set<String> scopes = new HashSet<String>();
     private final String tenant = "consumers";
     private final Logger logger = LogManager.getLogger();
     private final TokenMapper tokenMapper = new TokenMapper();
-
+    
     private final MSALogInForm form;
 
     public MicrosoftAuth(MSALogInForm form) {
@@ -244,19 +251,43 @@ public class MicrosoftAuth {
     @SuppressWarnings("all")
     private void addAllToDatabase() {
         try {
+            if (!cacheInfoFile.exists()) {
+                cacheInfoFile.createNewFile();
+            }
+            
             List<String> emails = new ArrayList<String>();
             for (IAccount account : app.getAccounts().get()) {
                 emails.add(account.username());
             }
 
-            for (final String email : emails) {
-                authenticate(email).thenAccept(new Consumer<MicrosoftAccount>() {
-                    @Override
-                    public void accept(MicrosoftAccount microsoftAccount) {
-                        addToDatabase(email, microsoftAccount);
-                    }
-                });
+            boolean changed = false;
+            ArrayList<MicrosoftAccount> accounts;
+            try {
+                accounts = gson.fromJson(FileUtils.readFileToString(cacheInfoFile, "UTF-8"), accountListType);
+            } catch (JsonSyntaxException e) {
+                accounts = new ArrayList<MicrosoftAccount>();
+                changed = true;
             }
+            
+            if (accounts == null) {
+                accounts = new ArrayList<MicrosoftAccount>();
+                changed = true;
+            }
+            
+            for (MicrosoftAccount account : accounts) {
+                String email = account.email;
+                if (emails.contains(email)) { // In case there is a disparity between the caches
+                    addToDatabase(email, account);
+                } else {
+                    accounts.remove(account);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                String raw = gson.toJson(accounts);
+                FileUtils.write(cacheInfoFile, raw, "UTF-8");
+            }
+            
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (Exception e) {
@@ -275,19 +306,17 @@ public class MicrosoftAuth {
         }
         boolean changed = false;
         boolean shouldRepack = false;
-        boolean amountChanged = false;
         if (!items.contains(email)) {
             box.addItem(email);
-            changed = amountChanged = true;
+            changed = true;
         }
         if (!Arrays.asList(popup.getComponents()).contains(userListForm)) {
-            popup.add(userListForm, popup.existingUserListIndex);
+            popup.add(userListForm);
             changed = shouldRepack = true;
         }
         
-        if (amountChanged) {
-            userListForm.createPartialInterface();
-        }
+        // Do not optimize by conditionally calling this when the amount changes, it breaks things somehow
+        userListForm.createPartialInterface();
         
         if (shouldRepack) {
             popup.repack();

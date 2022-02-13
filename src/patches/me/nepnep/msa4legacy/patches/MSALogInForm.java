@@ -2,21 +2,29 @@ package me.nepnep.msa4legacy.patches;
 
 import net.minecraft.launcher.Launcher;
 import net.minecraft.launcher.ui.popups.login.LogInPopup;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public class MSALogInForm extends JPanel {
-    public final MicrosoftAuth auth = new MicrosoftAuth(this);
     private final AccountConsumer consumer = new AccountConsumer();
+    private final Logger logger = LogManager.getLogger();
     public final LogInPopup popup;
+    public final MicrosoftAuth auth;
     
     public MSALogInForm(LogInPopup popup) {
         super(new GridLayout(5, 1, 0, 10)); // Extra one for device code
         this.popup = popup;
+        auth = new MicrosoftAuth(this);
         
         JLabel label = new JLabel("Email");
         add(label);
@@ -53,10 +61,22 @@ public class MSALogInForm extends JPanel {
         popup.getLogInForm().setVisible(!visible);
     }
     
-    private static class AccountConsumer implements Consumer<MicrosoftAccount> {
+    private class AccountConsumer implements Consumer<MicrosoftAccount> {
         @Override
         public void accept(MicrosoftAccount microsoftAccount) {
             Launcher.getCurrentInstance().getProfileManager().setSelectedUser(microsoftAccount.uuid);
+            File cacheFile = auth.cacheInfoFile;
+            try {
+                if (!cacheFile.exists()) {
+                    cacheFile.createNewFile();
+                }
+                ArrayList<MicrosoftAccount> cached = auth.gson.fromJson(FileUtils.readFileToString(cacheFile, "UTF-8"), auth.accountListType);
+                cached.add(new MicrosoftAccount(microsoftAccount)); // Remove token
+                String raw = auth.gson.toJson(cached);
+                FileUtils.write(cacheFile, raw, "UTF-8");
+            } catch (IOException e) {
+                logger.error("IOException while adding account to info cache", e);
+            }
         }
     }
 }
