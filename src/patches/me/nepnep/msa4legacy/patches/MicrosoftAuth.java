@@ -13,6 +13,9 @@ import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -212,7 +215,7 @@ public class MicrosoftAuth {
     }
 
     @SuppressWarnings("all")
-    private CompletableFuture<String> deviceFlow(ExecutionException e) {
+    private CompletableFuture<String> deviceFlow(final ExecutionException e) {
         if (e != null) {
             logger.debug("Couldn't load account from cache, starting device flow", e);
         }
@@ -229,8 +232,33 @@ public class MicrosoftAuth {
                 text.setEditable(false);
                 text.setBackground(null);
                 text.setBorder(null);
-                text.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-                text.setText(deviceCode.message());
+                text.setContentType("text/html");
+                ((HTMLEditorKit) text.getEditorKit()).setDefaultCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+                String verificationURI = deviceCode.verificationUri();
+                String formatted = "<html><p style=\"font-size: 88%;\">" + deviceCode.message().replace(verificationURI, String.format("<a href=\"%1$s\" style=\"cursor: grab;\">%1$s</a>", verificationURI)) + "</p></html>";
+                text.setText(formatted);
+                text.addHyperlinkListener(new HyperlinkListener() {
+                    @Override
+                    public void hyperlinkUpdate(HyperlinkEvent event) {
+                        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                            try {
+                                URL url = event.getURL();
+                                Desktop desktop;
+                                if (Desktop.isDesktopSupported() && (desktop = Desktop.getDesktop()).isSupported(Desktop.Action.BROWSE)) {
+                                    desktop.browse(url.toURI());
+                                } else {
+                                    fallback(url);
+                                }
+                            } catch (Exception e) {
+                                logger.error("Exception while opening device flow URL", e);
+                            }
+                        }
+                    }
+                    
+                    private void fallback(URL url) throws IOException {
+                        Runtime.getRuntime().exec(new String[]{"xdg-open", url.toString()});
+                    }
+                });
                 form.add(text);
                 form.validate();
             }

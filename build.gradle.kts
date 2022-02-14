@@ -28,7 +28,7 @@ version = "1.0.0"
 
 val origDecompName = "launcherDecompTmp"
 val buildDirectory: String = buildDir.canonicalPath
-val origDecompDir = "$buildDirectory/$origDecompName"
+val origDecompDir = buildDirectory + File.separator + origDecompName
 val launcherJar = "$buildDirectory/launcher.jar"
 
 repositories {
