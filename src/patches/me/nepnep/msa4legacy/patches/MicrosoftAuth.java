@@ -247,7 +247,10 @@ public class MicrosoftAuth {
                                 if (Desktop.isDesktopSupported() && (desktop = Desktop.getDesktop()).isSupported(Desktop.Action.BROWSE)) {
                                     desktop.browse(url.toURI());
                                 } else {
-                                    fallback(url);
+                                    int status = fallback(url);
+                                    if (status != 0) {
+                                        logger.error("xdg-open returned non-zero exit code {}", status);
+                                    }
                                 }
                             } catch (Exception e) {
                                 logger.error("Exception while opening device flow URL", e);
@@ -255,8 +258,13 @@ public class MicrosoftAuth {
                         }
                     }
                     
-                    private void fallback(URL url) throws IOException {
-                        Runtime.getRuntime().exec(new String[]{"xdg-open", url.toString()});
+                    private int fallback(URL url) throws IOException {
+                        try {
+                            return Runtime.getRuntime().exec(new String[]{"xdg-open", url.toString()}).waitFor();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return 0;
+                        }
                     }
                 });
                 form.add(text);
