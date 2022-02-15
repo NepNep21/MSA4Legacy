@@ -162,10 +162,11 @@ public class MicrosoftAuth {
         try {
             out = conn.getOutputStream();
             out.write(bodyToBytes(body));
-            JsonObject responseBody = gson.fromJson(new InputStreamReader(conn.getInputStream()), JsonObject.class);
             if (conn.getResponseCode() == 401) {
+                JsonObject responseBody = gson.fromJson(new InputStreamReader(conn.getErrorStream()), JsonObject.class);
                 throw new XErrException("XSTS auth returned 401 with XErr " + responseBody.get("XErr").getAsLong());
             }
+            JsonObject responseBody = gson.fromJson(new InputStreamReader(conn.getInputStream()), JsonObject.class);
             return responseBody.get("Token").getAsString();
         } finally {
             IOUtils.closeQuietly(out);
