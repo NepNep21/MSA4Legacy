@@ -15,18 +15,17 @@
  
  public class LogInPopup
  extends JPanel
-@@ -38,6 +38,10 @@
+@@ -38,6 +38,9 @@
      private final JButton loginButton = new JButton("Log In");
      private final JButton registerButton = new JButton("Register");
      private final JProgressBar progressBar = new JProgressBar();
 +    public final JButton msaButton = new JButton("Microsoft Account");
 +    public final MSALogInForm msaLogInForm;
 +    public final JPanel buttonPanel = new JPanel();
-+    public int existingUserListIndex = 0;
  
      public LogInPopup(Launcher minecraftLauncher, Callback callback) {
          super(true);
-@@ -45,10 +49,12 @@
+@@ -45,10 +48,12 @@
          this.callback = callback;
          this.errorForm = new AuthErrorForm(this);
          this.existingUserListForm = new ExistingUserListForm(this);
@@ -39,15 +38,7 @@
      }
  
      protected void createInterface() {
-@@ -63,6 +69,7 @@
-                 imagePanel.add(label);
-                 this.add(imagePanel);
-                 this.add(Box.createVerticalStrut(10));
-+                existingUserListIndex = 2;
-             }
-         }
-         catch (IOException e) {
-@@ -73,11 +80,13 @@
+@@ -73,11 +78,13 @@
          }
          this.add(this.errorForm);
          this.add(this.logInForm);
@@ -63,7 +54,7 @@
          this.add(buttonPanel);
          this.progressBar.setIndeterminate(true);
          this.progressBar.setVisible(false);
-@@ -90,6 +99,8 @@
+@@ -90,6 +97,8 @@
              this.logInForm.tryLogIn();
          } else if (e.getSource() == this.registerButton) {
              OperatingSystem.openLink(LauncherConstants.URL_REGISTER);
@@ -72,7 +63,7 @@
          }
      }
  
-@@ -128,7 +139,11 @@
+@@ -128,7 +137,11 @@
      }
  
      public void setLoggedIn(String uuid) {
@@ -85,7 +76,7 @@
      }
  
      public void repack() {
-@@ -139,7 +154,6 @@
+@@ -139,7 +152,6 @@
      }
  
      public static interface Callback {
