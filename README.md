@@ -22,6 +22,9 @@ To generate binary patches to use with the installer, run the genBinPatches task
 
 More tasks can be found in the build.gradle.kts file, please read which tasks depend on others to prevent unsaved work being lost  
 
+# Other fixes  
+Non auth related fixes can be found at Other fixes.txt  
+
 # Is this legal?  
 Yes, special care has been taken to keep this project 100% legal, by using both binary and source patches, no substantial mojang code is distributed by this project
 

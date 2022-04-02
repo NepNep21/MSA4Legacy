@@ -73,17 +73,18 @@
          if (this.arguments != null) {
              List<Argument> args = this.arguments.get((Object)type);
              if (args != null) {
-@@ -343,6 +363,9 @@
+@@ -343,6 +363,10 @@
          } else if (this.minecraftArguments != null) {
              if (type == ArgumentType.GAME) {
                  for (String arg : this.minecraftArguments.split(" ")) {
-+                    if (msa != null && (arg.equals("--userProperties") || arg.equals("${user_properties}"))) {
++                    if (msa != null && arg.equals("${user_properties}")) {
++                        builder.withArguments("{}");
 +                        continue;
 +                    }
                      builder.withArguments(substitutor.replace(arg));
                  }
                  if (featureMatcher.hasFeature("is_demo_user", true)) {
-@@ -369,4 +392,3 @@
+@@ -369,4 +393,3 @@
          }
      }
  }
