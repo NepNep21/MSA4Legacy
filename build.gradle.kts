@@ -92,7 +92,7 @@ task("decompileLauncher") {
 
     doLast {
         val options = mapOf(
-            "jarfilter" to "(net.minecraft|com.mojang).*",
+            "jarfilter" to "^net\\.minecraft.*|^com\\.mojang(?!\\.authlib.*).*",
             "removedeadconditionals" to "true",
             "rename" to "true",
             "outputdir" to origDecompDir
