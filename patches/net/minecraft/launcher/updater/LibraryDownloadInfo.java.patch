@@ -1,0 +1,15 @@
+--- a/net/minecraft/launcher/updater/LibraryDownloadInfo.java
++++ b/net/minecraft/launcher/updater/LibraryDownloadInfo.java
+@@ -27,10 +27,10 @@
+     }
+ 
+     public AbstractDownloadInfo getDownloadInfo(String classifier) {
+-        if (classifier == null) {
++        // HACK: Make 1.19+ work, native libraries no longer use a json classifier based system
++        if (classifier == null || this.classifiers == null) {
+             return this.artifact;
+         }
+         return this.classifiers.get(classifier);
+     }
+ }
+-

@@ -1,0 +1,23 @@
+--- a/net/minecraft/launcher/updater/Library.java
++++ b/net/minecraft/launcher/updater/Library.java
+@@ -106,6 +106,15 @@
+     }
+ 
+     public Map<OperatingSystem, String> getNatives() {
++        // HACK: Fix 1.19+
++        if (this.natives == null) {
++            String[] parts = this.name.split(":");
++            if (parts.length >= 4) {
++                String classifier = parts[3];
++                addNative(OperatingSystem.getCurrentPlatform(), classifier);
++            }
++        }
++        
+         return this.natives;
+     }
+ 
+@@ -167,4 +176,3 @@
+         return null;
+     }
+ }
+-

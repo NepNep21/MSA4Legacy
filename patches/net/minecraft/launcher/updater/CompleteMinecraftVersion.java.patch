@@ -35,7 +35,7 @@
  public class CompleteMinecraftVersion
  implements CompleteVersion {
      private static final Logger LOGGER = LogManager.getLogger();
-+    private final Gson gson = new Gson();
++    private static final Gson gson = new Gson();
      private String inheritsFrom;
      private String id;
      private Date time;
