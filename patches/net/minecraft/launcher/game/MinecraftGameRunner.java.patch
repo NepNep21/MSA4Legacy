@@ -110,7 +110,15 @@
          } else {
              map.put("auth_player_name", "Player");
              map.put("auth_uuid", new UUID(0L, 0L).toString());
-@@ -390,7 +427,8 @@
+@@ -281,6 +318,7 @@
+         map.put("profile_name", selectedProfile.getName());
+         map.put("version_name", version.getId());
+         map.put("game_directory", gameDirectory.getAbsolutePath());
++        map.put("library_directory", getLauncher().getWorkingDirectory().getAbsolutePath() + "/libraries");
+         map.put("game_assets", assetsDirectory.getAbsolutePath());
+         map.put("assets_root", this.getAssetsDir().getAbsolutePath());
+         map.put("assets_index_name", this.getVersion().getAssetIndex().getId());
+@@ -390,7 +428,8 @@
      }
  
      private CompatibilityRule.FeatureMatcher createFeatureMatcher() {
@@ -120,7 +128,7 @@
      }
  
      private String constructClassPath(CompleteMinecraftVersion version) {
-@@ -469,7 +507,7 @@
+@@ -469,7 +508,7 @@
                      }
                      catch (Throwable throwable) {
                          Downloadable.closeSilently(inputStream);
@@ -129,7 +137,7 @@
                      }
                      Downloadable.closeSilently(inputStream);
                      break block10;
-@@ -494,4 +532,3 @@
+@@ -494,4 +533,3 @@
          return this.selectedProfile;
      }
  }

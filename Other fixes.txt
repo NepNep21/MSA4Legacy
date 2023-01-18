@@ -1,1 +1,2 @@
 Fabric works with its installer if you unselect the "create profile" option
+Newer forge versions work now
