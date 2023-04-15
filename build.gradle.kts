@@ -24,7 +24,7 @@ plugins {
 }
 
 group = "me.nepnep.MSA4Legacy"
-version = "1.0.0"
+version = "1.1.0" // Installer
 
 val origDecompName = "launcherDecompTmp"
 val buildDirectory: String = buildDir.canonicalPath
