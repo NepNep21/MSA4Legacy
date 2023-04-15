@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class Main {
@@ -37,6 +38,13 @@ public class Main {
                                     "--unpatched"
                             });
                             System.out.println("Finished patching");
+                        } catch (FileNotFoundException e) {
+                            JOptionPane.showMessageDialog(
+                                    frame, 
+                                    "patches.lzma not found!", 
+                                    "Error", 
+                                    JOptionPane.ERROR_MESSAGE
+                            );
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
