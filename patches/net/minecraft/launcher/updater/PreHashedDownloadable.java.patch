@@ -1,0 +1,17 @@
+--- a/net/minecraft/launcher/updater/PreHashedDownloadable.java
++++ b/net/minecraft/launcher/updater/PreHashedDownloadable.java
+@@ -30,7 +30,8 @@
+         String localHash = null;
+         if (target.isFile()) {
+             localHash = PreHashedDownloadable.getDigest(target, "SHA-1", 40);
+-            if (this.expectedHash.equalsIgnoreCase(localHash)) {
++            // Allow preventing redownloading of jarmodded versions
++            if (this.expectedHash.isEmpty() || this.expectedHash.equalsIgnoreCase(localHash)) {
+                 return "Local file matches hash, using that";
+             }
+             FileUtils.deleteQuietly(target);
+@@ -61,4 +62,3 @@
+         }
+     }
+ }
+-

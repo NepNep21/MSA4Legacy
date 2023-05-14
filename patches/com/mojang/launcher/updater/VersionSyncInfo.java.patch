@@ -1,0 +1,18 @@
+--- a/com/mojang/launcher/updater/VersionSyncInfo.java
++++ b/com/mojang/launcher/updater/VersionSyncInfo.java
+@@ -40,9 +40,7 @@
+         if (this.getRemoteVersion() == null) {
+             return VersionSource.LOCAL;
+         }
+-        if (this.getRemoteVersion().getUpdatedTime().after(this.getLocalVersion().getUpdatedTime())) {
+-            return VersionSource.REMOTE;
+-        }
++        // Don't update check, the time field works in a weird unknown way
+         return VersionSource.LOCAL;
+     }
+ 
+@@ -68,4 +66,3 @@
+ 
+     }
+ }
+-

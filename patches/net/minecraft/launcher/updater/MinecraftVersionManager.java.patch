@@ -26,7 +26,17 @@
          }
          IOUtils.closeQuietly(inputStream);
          return result;
-@@ -362,4 +357,3 @@
+@@ -344,7 +339,8 @@
+             version = ((CompleteMinecraftVersion)version).getSavableVersion();
+         }
+         if ((localVersionList = this.getLocalVersionList()).getVersion(version.getId()) != null) {
+-            localVersionList.removeVersion(version.getId());
++            // Prevent overwriting of existing version manifests, this may cause other issues
++            return;
+         }
+         localVersionList.addVersion(version);
+         if (localVersionList instanceof LocalVersionList) {
+@@ -362,4 +358,3 @@
          }
      }
  }

@@ -1,0 +1,38 @@
+--- a/com/mojang/launcher/game/runner/AbstractGameRunner.java
++++ b/com/mojang/launcher/game/runner/AbstractGameRunner.java
+@@ -14,9 +14,12 @@
+ import com.mojang.launcher.updater.download.DownloadListener;
+ import com.mojang.launcher.updater.download.Downloadable;
+ import com.mojang.launcher.versions.CompleteVersion;
++import com.mojang.launcher.versions.Version;
+ import java.io.IOException;
+ import java.util.ArrayList;
+ import java.util.List;
++
++import net.minecraft.launcher.updater.*;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+@@ -80,6 +83,17 @@
+                 this.setStatus(GameInstanceStatus.IDLE);
+                 return;
+             }
++            Version local;
++            AbstractDownloadInfo dlInfo;
++            boolean isJarModded = (local = syncInfo.getLocalVersion()) instanceof CompleteMinecraftVersion;
++            if (isJarModded) {
++                dlInfo = ((CompleteMinecraftVersion) local).getDownloadURL(DownloadType.CLIENT);
++                isJarModded = ((dlInfo instanceof LocalDownloadInfo && ((LocalDownloadInfo) dlInfo).getSha1().isEmpty())
++                    || dlInfo instanceof DownloadInfo && ((DownloadInfo) dlInfo).getSha1().isEmpty());
++            }
++            if (isJarModded) {
++                this.version.setSynced(true);
++            }
+             if (syncInfo.getRemoteVersion() != null && syncInfo.getLatestSource() != VersionSyncInfo.VersionSource.REMOTE && !this.version.isSynced()) {
+                 try {
+                     syncInfo = this.getLauncher().getVersionManager().syncVersion(syncInfo);
+@@ -232,4 +246,3 @@
+         }
+     }
+ }
+-
