@@ -1,6 +1,6 @@
 --- a/net/minecraft/launcher/game/MinecraftGameRunner.java
 +++ b/net/minecraft/launcher/game/MinecraftGameRunner.java
-@@ -45,14 +45,15 @@
+@@ -45,14 +45,16 @@
  import java.util.Map;
  import java.util.TreeSet;
  import java.util.UUID;
@@ -13,6 +13,7 @@
 -import net.minecraft.launcher.LauncherConstants;
 +
 +import me.nepnep.msa4legacy.patches.MicrosoftAccount;
++import me.nepnep.msa4legacy.patches.MicrosoftAuth;
 +import net.minecraft.launcher.*;
  import net.minecraft.launcher.profile.LauncherVisibilityRule;
  import net.minecraft.launcher.profile.Profile;
@@ -20,7 +21,7 @@
  import net.minecraft.launcher.updater.ArgumentType;
  import net.minecraft.launcher.updater.CompleteMinecraftVersion;
  import net.minecraft.launcher.updater.Library;
-@@ -77,6 +78,7 @@
+@@ -77,6 +79,7 @@
      private LauncherVisibilityRule visibilityRule = LauncherVisibilityRule.CLOSE_LAUNCHER;
      private UserAuthentication auth;
      private Profile selectedProfile;
@@ -28,7 +29,7 @@
  
      public MinecraftGameRunner(Launcher minecraftLauncher, String[] additionalLaunchArgs) {
          this.minecraftLauncher = minecraftLauncher;
-@@ -183,10 +185,10 @@
+@@ -183,10 +186,10 @@
          }
          CompatibilityRule.FeatureMatcher featureMatcher = this.createFeatureMatcher();
          StrSubstitutor argumentsSubstitutor = this.createArgumentsSubstitutor(this.getVersion(), this.selectedProfile, gameDirectory, assetsDir, this.auth);
@@ -41,7 +42,7 @@
          Proxy proxy = this.getLauncher().getProxy();
          PasswordAuthentication proxyAuth = this.getLauncher().getProxyAuth();
          if (!proxy.equals(Proxy.NO_PROXY)) {
-@@ -254,25 +256,60 @@
+@@ -254,25 +257,56 @@
          }
          return virtualRoot;
      }
@@ -55,11 +56,7 @@
 +        msa = profManager.getAuthDatabase().getMSAByUUID(profManager.getSelectedUser());
 +        if (msa != null) {
 +            try {
-+                msa = ((SwingUserInterface) minecraftLauncher.getUserInterface()).popup
-+                        .msaLogInForm
-+                        .auth
-+                        .authenticate(msa.email)
-+                        .get();
++                msa = MicrosoftAuth.authenticate(msa.email, null).get();
 +            } catch (InterruptedException e) {
 +                Thread.currentThread().interrupt();
 +            } catch (ExecutionException e) {
@@ -110,7 +107,7 @@
          } else {
              map.put("auth_player_name", "Player");
              map.put("auth_uuid", new UUID(0L, 0L).toString());
-@@ -281,6 +318,7 @@
+@@ -281,6 +315,7 @@
          map.put("profile_name", selectedProfile.getName());
          map.put("version_name", version.getId());
          map.put("game_directory", gameDirectory.getAbsolutePath());
@@ -118,7 +115,7 @@
          map.put("game_assets", assetsDirectory.getAbsolutePath());
          map.put("assets_root", this.getAssetsDir().getAbsolutePath());
          map.put("assets_index_name", this.getVersion().getAssetIndex().getId());
-@@ -390,7 +428,8 @@
+@@ -390,7 +425,8 @@
      }
  
      private CompatibilityRule.FeatureMatcher createFeatureMatcher() {
@@ -128,7 +125,7 @@
      }
  
      private String constructClassPath(CompleteMinecraftVersion version) {
-@@ -469,7 +508,7 @@
+@@ -469,7 +505,7 @@
                      }
                      catch (Throwable throwable) {
                          Downloadable.closeSilently(inputStream);
@@ -137,7 +134,7 @@
                      }
                      Downloadable.closeSilently(inputStream);
                      break block10;
-@@ -494,4 +533,3 @@
+@@ -494,4 +530,3 @@
          return this.selectedProfile;
      }
  }
