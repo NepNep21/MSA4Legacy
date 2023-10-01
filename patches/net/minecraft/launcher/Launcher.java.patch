@@ -35,7 +35,31 @@
          } else if (!auth.isLoggedIn()) {
              if (auth.canLogIn()) {
                  try {
-@@ -297,10 +306,12 @@
+@@ -240,7 +249,6 @@
+                     catch (IOException e) {
+                         LOGGER.error("Couldn't save profiles after refreshing auth!", (Throwable)e);
+                     }
+-                    this.profileManager.fireRefreshEvent();
+                 }
+                 catch (AuthenticationException e) {
+                     LOGGER.error("Exception whilst logging into profile", (Throwable)e);
+@@ -259,7 +267,6 @@
+                 catch (IOException e) {
+                     LOGGER.error("Couldn't save profiles after refreshing auth!", (Throwable)e);
+                 }
+-                this.profileManager.fireRefreshEvent();
+             }
+             catch (InvalidCredentialsException e) {
+                 LOGGER.error("Exception whilst logging into profile", (Throwable)e);
+@@ -269,6 +276,7 @@
+                 LOGGER.error("Exception whilst logging into profile", (Throwable)e);
+             }
+         }
++        this.profileManager.fireRefreshEvent();
+     }
+ 
+     public UUID getClientToken() {
+@@ -297,10 +305,12 @@
                  referencedObjects.add(object.getHash().toLowerCase());
              }
          }
@@ -50,7 +74,7 @@
                  if (files == null) continue;
                  for (File file : files) {
                      if (referencedObjects.contains(file.getName().toLowerCase())) continue;
-@@ -373,7 +384,8 @@
+@@ -373,7 +383,8 @@
          if (!virtualsDir.isDirectory()) {
              return;
          }
@@ -60,7 +84,7 @@
          if (directories != null) {
              for (File directory : directories) {
                  File lastUsedFile = new File(directory, ".lastused");
-@@ -398,10 +410,12 @@
+@@ -398,10 +409,12 @@
          if (!root.isDirectory()) {
              return;
          }
@@ -75,7 +99,7 @@
                  if (files == null) continue;
                  for (File folder : files) {
                      LOGGER.debug("Deleting " + folder);
-@@ -488,7 +502,6 @@
+@@ -488,7 +501,6 @@
                  if (!FileUtils.deleteQuietly(file)) break block0;
                  LOGGER.info("Deleted empty directory {}", file);
              }
@@ -83,7 +107,7 @@
          }
      }
  
-@@ -521,4 +534,3 @@
+@@ -521,4 +533,3 @@
          LOGGER = LogManager.getLogger();
      }
  }
